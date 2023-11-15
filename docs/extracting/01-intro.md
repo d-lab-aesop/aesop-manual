@@ -1,4 +1,5 @@
 # Introduction
+
 To start analyzing your stories, click Create a new observation from an expanded story, or directly in the database view
 
 n.b.: each observation is specific to a story. Please do not re-use existing observations; always create a new one.
@@ -15,7 +16,7 @@ Subjects do not have to be people; if you need to express interactions between o
 
 Unlike observations, you can and should re-use existing variables if they fit your needs. Read the full name of the variable to make sure it is appropriate. If not, create a new one using the closest existing one as a reference.
 
-The Variables tab contains a list of existing variables. 
+The Variables tab contains a list of existing variables.
 
 Refer to this to get a sense of proper variable structure.
 
@@ -35,11 +36,13 @@ Hover over the small “i” icon to the right of each field’s name for a desc
 
 You do not need to alter the Preposition and Description fields—these are automatically computed for you as you fill in the other fields.
 
-The Label indicates the direction of the interaction you are describing. 
-+ "+" indicates that the From variable INCREASES the To variable, whereas
-- "-" indicates that the From variable DECREASES the To variable  
+The Label indicates the direction of the interaction you are describing.
 
-An observation is valid once you have selected a From variable, a To variable, and a Label. 
+- "+" indicates that the From variable INCREASES the To variable, whereas
+
+* "-" indicates that the From variable DECREASES the To variable
+
+An observation is valid once you have selected a From variable, a To variable, and a Label.
 
 Once all three exist, the name of the observation will change to a short summary of the interaction you’ve described.
 
@@ -51,30 +54,30 @@ Any observations you have added will show up under the Links field of the story 
 
 You can also add observations directly from this screen by clicking the + button.
 
-
-
-
 Let's complicate this a little more. Example 5 is another version of the same story:
 
 :::note Example 5
 The chicken crossed the road to avoid a fox that was on the same side.
 :::
 
-Whereas examples 2-4 do the bare minimum of explaining _why_ the chicken crossed the road, example 5 reveals a little more about the chicken's __motivations.__ 
-
+Whereas examples 2-4 do the bare minimum of explaining _why_ the chicken crossed the road, example 5 reveals a little more about the chicken's **motivations.**
 
 :::note Diagram: Reinforcing loop
+
 ```mermaid
 graph LR
     A(["chickens on side A"]) -...-> B(["chickens on side B"])
     B(["chickens on side B"]) -...-> A(["chickens on side A"])
 ```
+
 :::
 
 :::note Diagram: Balancing loop
+
 ```mermaid
 graph LR
     A(["chicken population"]) ----> B(["fox population"])
     B(["fox population"]) -...-> A(["chicken population"])
 ```
+
 :::

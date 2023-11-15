@@ -1,0 +1,396 @@
+import { useState, useRef, useEffect } from "react";
+import Papa from "papaparse";
+import writeXlsxFile from "write-excel-file";
+import { saveAs } from "file-saver";
+
+# Converting your data for Kumu
+
+Once you're ready to visualize your analysis as a system dynamics map, you'll need to export your data from Airtable and upload it to Kumu. To keep things simple, we'll download our data from Airtable as CSV files, do some minor formatting, and then upload it to Kumu as an XLSX file.
+
+First, visit your Observations and Variables tables, and go to [View name]-> Download CSV.
+
+!IMPORTANT!
+Make sure not to include any fields containing full transcripts in your Airtable exports—these might exceed Excel's per-cell character limit and create an unreadable file. You can filter for just the fields you want to include in your Kumu map by hiding them in your view (it may also be a good idea to create a specific view just for Kumu exports.)
+
+Next, use the converter tool below to compile your CSVs into an XLSX that Kumu will accept. You'll have to click "Convert" twice to get a file---this is a bug that will be fixed eventually.
+
+Kumu needs to know what to call your variables. The converter will use the first column in your uploaded file unless you tell it otherwise. You can specify a different column for you labels with the format: `{"label":"your-column"}` (include the quotes).
+
+Kumu requires a minimum of three things to draw a connection: the name of the upstream variable A to draw the connection FROM (cause, source); the name of the downstream variable B to draw the connection TO (effect, destination); and LABEL, which describes the direction of the connection (+/SAME or -/OPPOSITE). The converter will assume your first column is FROM, your second column is TO, and your third column is LABEL unless you specify otherwise, e.g. `{"from":"from-column","to":"to-column","label","label-column"}`
+
+<Form />
+
+# Uploading to Kumu
+
+Follow the Kumu user guide to set up an account and create a project. Choose "System" for the map's preset template when prompted.
+
+Click the green plus sign at the bottom of your new blank map and select "import," then select the XLSX file you just made under "Import XLSX or CSV file." Click the blue "import spreadsheet" button to proceed.
+
+Next, you'll see an "import review" screen. If you followed the steps above correctly, Kumu should tell you that it didn't find any errors, and you'll be able to click the "save import" button in the bottom right corner to see your analysis on the map.
+
+If Kumu finds errors, you'll have to scroll down through the import preview table to find the rows highlighted in red. Click "cancel", and fix the issues by re-exporting your data from Airtable.
+
+# Map preparation
+
+Now you should see all of your variables and connections visualized as a mass of linked grey circles. This is very difficult to make sense of visually, so the first thing we're going to want to do is tell Kumu to calculate some network properties. Kumu includes automated tools for mathematically determining the "center" of the system, as well as identifying clusters of variables that seem particularly interconnected (which might represent themes in your data).
+
+To calculate centrality metrics for your system, click on the tiny icon that looks like a laboratory beaker in the bottom right menu (second from the left), and choose "Social Network Analysis". Click on "Choose a metric" and select "All metrics" from the dropdown, then click "Run all metrics." This might take a little while if you have a particularly large or densely-connected dataset. Don't worry—--the progress bar will eventually get to 100% and turn green. Once it does, you can click "Back" in the top left to return to the full map.
+
+Next, we'll ask Kumu to automatically detect clusters of closely connected variables. Click on the "Metrics" beaker again and choose "Community Detection." Kumu will most likely tell you it found a huge number of communities, and show you the 10 largest ones. This is not particularly helpful for reducing the complexity of our map—--we'll have to tweak the detection settings to limit the number of communities Kumu identifies. Click on the tiny gear icon in the top right (to the left of "Run"), and change "Minimum community size" to at least four or five. You can also set "Community limit" to a higher number if you want to look at more than just the top 10. Click "Update settings," then "Run" to re-run the analysis. Keep in mind that community detection is a stochastic process. Since Kumu is starting from a random guess and iteratively optimizing its groupings, it is likely that the communities detected will change slightly each time you run the analysis. If you find that your groups are changing a lot, it may be helpful to increase the "Iterations (T)" parameter to allow Kumu to run the optimization for longer. Once you have a set of communities that seem to make sense, click through them and try to assign names that reflect any themes you notice in the included variables. Don't forget to click "Save" to avoid losing your changes!
+
+At this point, the map should remain unchanged visually, but if you select a variable (a circle) and then bring up the left-side sidebar by clicking the three dots on the left edge of the screen, you'll see a few new fields at the bottom, in addition to the ones in the data you imported. These are the metrics we just told Kumu to calculate. Clicking the "Table" icon in the bottom right will bring up a spreadsheet-style view of your imported data. You can look at your metrics and communities in this view by clicking on the filter icon in the top right and enabling them in the list that appears.
+
+Now we can use these additional layers of analysis to make sense of our map, by telling Kumu to map the new quantitative metrics to the appearance of our variables. Click the "Settings" icon along the right edge of the screen, select everything that appears in the editable text field, and replace it with the following (don't forget to hit "Save!"):
+
+```
+@view "Connectivity" {
+    default: true;
+
+  /* elements: Degree: sensitivity and immediate impact */
+  element {
+    scale: scale("degree", 1, 6);
+    opacity: scale("degree", 0.9, 1.0);
+    color: scale("degree", #ffe794, #a40126)
+  }
+}
+
+@view "Efficiency" {
+  /* elements: Reach efficiency: "bang for the buck" */
+  element {
+    scale: scale("reach-efficiency", 1, 6);
+    opacity: scale("reach-efficiency", 0.9, 1.0);
+    color: scale("reach-efficiency", #ffe794, #a40126)}
+}
+
+@view "Influence" {
+  /* elements: Eigenvector: overall leverage */
+  element {
+    scale: scale("eigenvector", 1, 6);
+    opacity: scale("eigenvector", 0.9, 1.0);
+    color: scale("eigenvector", #ffe794, #a40126)
+  }
+}
+
+@view "Indegree" {
+  element {
+    scale: scale("indegree", 1, 6);
+    opacity: scale("indegree", 0.9, 1.0);
+    color: scale("indegree", #ffe794, #a40126)
+  }
+}
+
+@view "Outdegree" {
+  element {
+    scale: scale("outdegree", 1, 6);
+    opacity: scale("outdegree", 0.9, 1.0);
+    color: scale("outdegree", #ffe794, #a40126)
+  }
+}
+
+@view "Pagerank" {
+  element {
+    scale: scale("glPagerank", 1, 6);
+    opacity: scale("glPagerank", 0.9, 1.0);
+    color: scale("glPagerank", #ffe794, #a40126)
+  }
+}
+
+@view "Reverse pagerank" {
+  element {
+    scale: scale("glPagerankReversed", 1, 6);
+    opacity: scale("glPagerankReversed", 0.9, 1.0);
+    color: scale("glPagerankReversed", #ffe794, #a40126)
+  }
+}
+
+@controls {
+  top {
+    label {
+      value: "emphasis";
+      font-size: 12;
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    view-toggle {
+      default: "Influence";
+      multiple: false;
+      as: labels;
+      font-size: 12;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    label {
+      value: "top";
+      font-size: 12;
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    showcase {
+      multiple: true;
+      mode: normal;
+      as: labels;
+      placeholder: "all elements";
+      font-size: 12;
+      font-weight: 700;
+      text-transform: uppercase;
+
+      option {
+        label: "connectivity";
+        selector: element["degree">10];
+      }
+
+      option {
+        label: "efficiency";
+        selector: element["reach-efficiency">0.01];
+      }
+
+      option {
+        label: "influence";
+        selector: element["eigenvector">0.02];
+      }
+
+      option {
+        label: "pagerank";
+        selector: element["glPagerank">0.01];
+      }
+
+      option {
+        label: "reverse pagerank";
+        selector: element["glPagerankReversed">0.01];
+      }
+
+      option {
+        label: "frequency";
+        selector: connection["frequency">3];
+      }
+    }
+
+    label {
+      value: "role";
+      font-size: 12;
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    showcase {
+      multiple: true;
+      as: labels;
+      placeholder: "all elements";
+      font-size: 12;
+      font-weight: 700;
+      text-transform: uppercase;
+
+      option {
+        label: "high in";
+        selector: ["indegree">3];
+      }
+
+      option {
+        label: "high out";
+        selector: ["outdegree">3];
+      }
+    }
+  }
+
+  bottom {
+    label {
+      value: "top";
+      font-size: 12;
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    showcase {
+      mode: loose;
+      multiple: match-all;
+
+      option {
+        label: "regular";
+        selector: ["reach-efficiency">0.01], ["eigenvector">0.02];
+      }
+
+      option {
+        label: "pagerank";
+        selector: ["glPagerank">0.01], ["glPagerankReversed">0.01];
+      }
+
+      option {
+        label: "frequency";
+        selector: ["frequency">3];
+      }
+
+      option {
+        label: "2+degree";
+        selector: ["degree">1];
+      }
+    }
+
+    label {
+      value: "cluster";
+      font-size: 12;
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    showcase {
+      target: element;
+      by: "community";
+      as: labels;
+      multiple: true;
+      default: select-none;
+      mode: normal;
+      font-size: 12;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+  }
+}
+
+@settings {
+  ignore-orphans: true;
+  layout: force;
+  theme: light;
+  element-size: 40;
+  text-overflow: auto;
+  culling: false;
+  background-opacity: 0;
+  layout-preset: hairball;
+  element-text-align: center;
+}
+
+connection["frequency"] {
+  scale: scale("frequency", 1, 10);
+}
+
+connection["label"="-"] {
+  style: dashed;
+}
+
+```
+
+You may have to refresh the page to see the changes, but your map should now be much more spread out, and there should now be several rows of clickable links at the top and bottom of the screen. These are controls that tell Kumu to change the size and color of variables according to their scores on the metrics we calculated (top row, the Kumu docs go into greater detail re: what each metric represents); filter for just the variables that score the highest on each metric (second row from top, you can choose more than one); and filter for just the variables that appear in the identified clusters/communities (bottomw row). Play around with different combinations of these visualization controls, and see what patterns emerge!
+
+export function Form() {
+  const varRef = useRef(null);
+  const obsRef = useRef(null);
+  const varNameRef = useRef(null);
+  const obsNameRef = useRef(null);
+  const parsedVars = useRef({})
+  const parsedConns = useRef({})
+async function handleSubmit(e) {
+  // currently only works on double-click because second part of function is triggered by a conditional test
+e.preventDefault();
+Papa.parse(varRef.current.files[0], {
+complete: (results) => {
+parsedVars.current = results
+},
+header: true,
+skipEmptyLines: "greedy",
+});
+Papa.parse(obsRef.current.files[0], {
+complete: (results) => {
+parsedConns.current=results
+},
+header: true,
+skipEmptyLines: "greedy",
+});
+
+if (parsedVars.current?.meta && parsedConns.current?.meta){
+const varCols = varNameRef.current.value ? JSON.parse(varNameRef.current.value) : {label:parsedVars.current.meta.fields[0]}
+const connCols = obsNameRef.current.value ? JSON.parse(obsNameRef.current.value) : {from:parsedConns.current.meta.fields[0],to:parsedConns.meta.fields[1],label:parsedConns.meta.fields[2]}
+const varSchema = [
+{
+column: 'label',
+type: String,
+width: 20,
+value: item => item[varCols.label]
+},
+...parsedVars.current.meta.fields.filter(x=>x!='label').map(y=>({column:y, type: String, value: item => item[y]}))
+]
+const connSchema = [
+{
+column: 'from',
+type: String,
+width: 20,
+value: item => item[connCols.from]
+}, {
+column: 'to',
+type: String,
+width: 20,
+value: item => item[connCols.to]
+},{
+column: 'label',
+type: String,
+width: 20,
+value: item => item[connCols.label]
+},
+...parsedConns.current.meta.fields.filter(x=>!['from','to','label'].includes(x)).map(y=>({column:y, type: String, value: item => item[y]}))
+]
+const filteredConns = parsedConns.current.data.filter((x) => x[connCols.from]&&x[connCols.to]&&x[connCols.label])
+const filteredVars = parsedVars.current.data.filter((x) => x[varCols.label])
+const xlsxFile = await writeXlsxFile([filteredConns, filteredVars], {
+schema: [connSchema, varSchema],
+sheets: ['Connections', 'Variables'],
+})
+saveAs(xlsxFile, "convertedForKumu.xlsx");
+}
+}
+
+return (
+
+<div>
+<form onSubmit={handleSubmit}>
+<ul
+style={{
+            display: "flex",
+            flexDirection: "column",
+            listStyleType: "none",
+          }} >
+            <li>Variable file</li>
+
+          <li>
+            <label>
+              <input type="file" ref={varRef} required />
+            </label>
+          </li>
+
+          <li>
+            <label>
+              optional column configuration for variables
+              <input
+                type="text"
+                ref={varNameRef}
+                defaultValue={`{"label":"label"}`}
+
+              />
+            </label>
+          </li>
+          <li>Connections file</li>
+          <li>
+            <label>
+              <input type="file" ref={obsRef} required />
+            </label>
+          </li>
+          <li>
+            <label>
+              optional column configuration for connections
+              <input
+                type="text"
+                ref={obsNameRef}
+                defaultValue={`{"label":"label","from":"from","to":"to"}`}
+
+              />
+            </label>
+          </li>
+          <li>
+            <button>Convert</button>
+          </li>
+        </ul>
+      </form>
+    </div>
+
+);
+}
